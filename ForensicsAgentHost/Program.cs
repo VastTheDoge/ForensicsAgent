@@ -7,7 +7,7 @@ using OpenAI.Chat;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 // Basic setup
-var apikey = new ApiKeyCredential(string.Empty);
+var apikey = new ApiKeyCredential("noop");
 var endpointOptions = new OpenAIClientOptions { Endpoint = new Uri("http://localhost:1234/v1"), NetworkTimeout = TimeSpan.FromMinutes(10)  };
 
 var output = new StringBuilder();
@@ -42,7 +42,7 @@ var chatOptions = new ChatOptions
 	Tools = [
 		AIFunctionFactory.Create(async (string cmd) =>
 		{
-			var log1 = $"\n{'-' * 15}\nrunning command:\n{cmd}";
+			var log1 = $"\n{new string('-', 15)}\nrunning command:\n{cmd}";
 			Console.WriteLine(log1);
 			output.AppendLine(log1);
 			
@@ -56,7 +56,7 @@ var chatOptions = new ChatOptions
 		}, "run_command"),
 		AIFunctionFactory.Create((string path, bool isEvidence, string? desc) =>
 		{
-			var log1 = $"\n{'-' * 15}\nFile flagged:\npath: {path}\nEvidence? {isEvidence}";
+			var log1 = $"\n{new string('-', 15)}\nFile flagged:\npath: {path}\nEvidence? {isEvidence}";
 			Console.WriteLine(log1);
 			output.AppendLine(log1);
 
@@ -75,13 +75,14 @@ List<ChatMessage> history =
 		"""
 		You are a Digital Forensics AI agent designed to do an initial assessment and report of a system and its files including any anomalies or hidden data. You will have access to two tools:
 		1. A tool to tag files and folders for review along with a description with any additional information when useful.
-		2. A tool to run any command on the system that is recognized. Always verify that you are limiting the length of the output (when reading a file, only read the first few bytes as one of many examples), verify that the command should yield different data than what you have found before, and verify the command and where you are in the file system before running it.
+		2. A tool to run any command on the system that is recognized. Always verify that you are limiting the length of the output (when reading a file, only read the first few bytes as one of many examples), verify that the command should yield different data than what you have found before, and verify that you are looking at the right folder in the command as your location in the file system does not change  when ran as separate commands.
+		
 		
 		During a review you are to look at each file in detail to determine if there could be hidden data. 
 		Flagging files should be done with the original file paths even if a file is moved or renamed in your investigation.
 		You will not have user input and will run autonomously, only stop when all possible evidence has been reviewed and tagged.
 		"""),
-	new(ChatRole.User, "This computer belonged to a former employee who attempted to gain access to other computers and to the company network remotely. Please review the common windows folders and look for any anomalies."),
+	new(ChatRole.User, "This computer belonged to a former employee who attempted to gain access to other computers and to the company network remotely. Please review the common windows user folders and look for any anomalies."),
 ];
 
 // stream output as agent works
@@ -105,7 +106,7 @@ await foreach (var update in ai.GetStreamingResponseAsync(history, chatOptions))
 	}
 }
 
-var evidenceOutput = string.Concat(flagDict.Select(kv => $"{(kv.Value.Item1 ? 'Y' : 'N')}\t{kv.Key} \n {kv.Value.Item2}\n{'-' * 25}"));
+var evidenceOutput = string.Concat(flagDict.Select(kv => $"{(kv.Value.Item1 ? 'Y' : 'N')}\t{kv.Key} \n {kv.Value.Item2}\n{new string('-', 15)}\n\n"));
 Console.WriteLine(evidenceOutput);
 output.AppendLine(evidenceOutput);
 
@@ -119,3 +120,7 @@ var filePath = Path.Join(outDir, $"{model.Replace('/', '_')} - {seed} - {nextNum
 File.WriteAllText(filePath, $"model: {model}\nseed: {seed}\n run: {nextNum}\n DateTime: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}\noutput:\n{output}");
 
 Console.WriteLine("DONE");
+Console.WriteLine($"Wrote to {filePath}");
+
+//pause rq
+Console.ReadLine();
