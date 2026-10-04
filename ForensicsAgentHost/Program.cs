@@ -117,7 +117,7 @@ history.AddMessages(updates);
 var nextNum = Directory.EnumerateFiles(outDir, $"{model.Replace('/', '_')} - {seed} - *").Count();
 var filePath = Path.Join(outDir, $"{model.Replace('/', '_')} - {seed} - {nextNum}.txt");
 
-File.WriteAllText(filePath, $"model: {model}\nseed: {seed}\n run: {nextNum}\n DateTime: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}\noutput:\n{output}");
+File.WriteAllText(filePath, $"model: {model}\nseed: {seed}\nrun: {nextNum}\nDateTime: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}\n\noutput:\n{output}");
 
 Console.WriteLine("DONE");
 Console.WriteLine($"Wrote to {filePath}");
