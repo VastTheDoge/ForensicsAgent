@@ -18,6 +18,9 @@ var seed = Console.ReadLine() is { } line ? long.Parse(line) : 0;
 Console.WriteLine("Enter model: ");
 var model = Console.ReadLine() ?? string.Empty;
 
+Console.WriteLine("Enter VM IP: ");
+var ip  = Console.ReadLine() ?? string.Empty;
+
 var outDir = Path.Join(Directory.GetCurrentDirectory(), "/output");
 
 // our flags to check:
@@ -28,7 +31,7 @@ if (!Directory.Exists(outDir))
 	Directory.CreateDirectory(outDir);
 
 // API setup for reaching the worker in the VM
-var http = new HttpClient { BaseAddress = new Uri("http://localhost:6202/") };
+var http = new HttpClient { BaseAddress = new Uri($"http://{ip}:6202/") };
 
 // LM Studio setup
 var ai = new ChatClient(model, apikey, endpointOptions)
@@ -73,16 +76,26 @@ List<ChatMessage> history =
 [
 	new(ChatRole.System, 
 		"""
-		You are a Digital Forensics AI agent designed to do an initial assessment and report of a system and its files including any anomalies or hidden data. You will have access to two tools:
-		1. A tool to tag files and folders for review along with a description with any additional information when useful.
-		2. A tool to run any command on the system that is recognized. Always verify that you are limiting the length of the output (when reading a file, only read the first few bytes as one of many examples), verify that the command should yield different data than what you have found before, and verify that you are looking at the right folder in the command as your location in the file system does not change  when ran as separate commands.
+		You are a fully autonomous agent who is an expert in Digital Forensics.
+		You goal is to do an in-depth investigation of a system and its files including any anomalies or hidden data.
+		You are to start by gathering system information, then directory information, then looking at each and every file in detail (including file content) starting with common user folders.
+		You are expected to take your time to find any and all leads.
 		
+		You will think through steps picking the best action at a time and never end your investigation with further steps as you are never lazy.
 		
-		During a review you are to look at each file in detail to determine if there could be hidden data. 
-		Flagging files should be done with the original file paths even if a file is moved or renamed in your investigation.
-		You will not have user input and will run autonomously, only stop when all possible evidence has been reviewed and tagged.
+		ForensicsAgentWorker.exe is an expected file in downloads as you use it to run commands on the machine.
+		
+		In order to achieve your goal you will have two tools available:
+		The first is a tool to run any command on the system to gather information and modify files with the purpose of extracting information. 
+		When you are working with potentially large files, read only the first few bytes, enough to gather what the file is based on a signature and some of the content.
+		
+		The second tool you can use is a flag tool which let's you flag a file as evidence with a description to provide information on why it is evidence or how to extract the file or to flag a file as not being evidence to look at.
 		"""),
-	new(ChatRole.User, "This computer belonged to a former employee who attempted to gain access to other computers and to the company network remotely. Please review the common windows user folders and look for any anomalies."),
+	new(ChatRole.User, 
+		"""
+		You have been given access via your worker, you are to do an in-depth review of the user's files in the following folders: Desktop, Downloads, Documents, Pictures, Music, Videos. 
+		This is a very focused review, so I expect a good bit of work without mistakes.
+		"""),
 ];
 
 // stream output as agent works
