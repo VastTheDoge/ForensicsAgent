@@ -1,5 +1,6 @@
 ﻿using System.ClientModel;
 using System.Net.Http.Json;
+using System.Text;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
@@ -8,6 +9,8 @@ using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 // Basic setup
 var apikey = new ApiKeyCredential(string.Empty);
 var endpointOptions = new OpenAIClientOptions { Endpoint = new Uri("http://localhost:1234/v1"), NetworkTimeout = TimeSpan.FromMinutes(10)  };
+
+var output = new StringBuilder();
 
 Console.WriteLine("Enter seed: ");
 var seed = Console.ReadLine() is { } line ? long.Parse(line) : 0;
@@ -24,8 +27,6 @@ var flagDict = new Dictionary<string, (bool, string)>();
 if (!Directory.Exists(outDir))
 	Directory.CreateDirectory(outDir);
 
-var nextNum = Directory.EnumerateFiles(outDir, $"{model} - {seed}*", SearchOption.AllDirectories).Count();
-
 // API setup for reaching the worker in the VM
 var http = new HttpClient { BaseAddress = new Uri("http://localhost:6202/") };
 
@@ -38,25 +39,31 @@ var ai = new ChatClient(model, apikey, endpointOptions)
 
 var chatOptions = new ChatOptions
 {
-	Tools = [AIFunctionFactory.Create(async (string cmd) =>
-	{
-		Console.WriteLine($"\n{'-'*15}\nrunning command:\n{cmd}");
-		
-		var resp = await http.PostAsJsonAsync("run-command", cmd);
-		var output = await resp.Content.ReadAsStringAsync();
-		
-		Console.WriteLine($"output from command: {output}");
+	Tools = [
+		AIFunctionFactory.Create(async (string cmd) =>
+		{
+			var log1 = $"\n{'-' * 15}\nrunning command:\n{cmd}";
+			Console.WriteLine(log1);
+			output.AppendLine(log1);
+			
+			var resp = await http.PostAsJsonAsync("run-command", cmd);
+			var cmdOut = await resp.Content.ReadAsStringAsync();
 
-		return output;
-	}, "run_command"),
-	AIFunctionFactory.Create((string path, bool isEvidence, string? desc) =>
-	{
-		Console.WriteLine($"\n{'-'*15}\nFile flagged:\npath: {path}\nEvidence? {isEvidence}");
-		
-		flagDict[path] = (isEvidence, desc ?? string.Empty);
-		
-		return $"file with path {path} has been updated to {(isEvidence ? string.Empty : "not " )}be included in evidence";
-	},"flag_file"),
+			var log2 = $"output from command: {cmdOut}";
+			Console.WriteLine(log2);
+
+			return cmdOut;
+		}, "run_command"),
+		AIFunctionFactory.Create((string path, bool isEvidence, string? desc) =>
+		{
+			var log1 = $"\n{'-' * 15}\nFile flagged:\npath: {path}\nEvidence? {isEvidence}";
+			Console.WriteLine(log1);
+			output.AppendLine(log1);
+
+			flagDict[path] = (isEvidence, desc ?? string.Empty);
+			
+			return $"file with path {path} has been updated to {(isEvidence ? string.Empty : "not " )}be included in evidence";
+		},"flag_file"),
 	],
 	Seed = seed
 };
@@ -88,12 +95,27 @@ await foreach (var update in ai.GetStreamingResponseAsync(history, chatOptions))
 		{
 			case TextReasoningContent thinking:
 				Console.Write(thinking.Text);
+				output.Append(thinking.Text);
 				break;
 			case TextContent text:
 				Console.Write(text.Text);
+				output.Append(text.Text);
 				break;
 		}
 	}
 }
 
+var evidenceOutput = string.Concat(flagDict.Select(kv => $"{(kv.Value.Item1 ? 'Y' : 'N')}\t{kv.Key} \n {kv.Value.Item2}\n{'-' * 25}"));
+Console.WriteLine(evidenceOutput);
+output.AppendLine(evidenceOutput);
+
+
 history.AddMessages(updates);
+
+// write to output
+var nextNum = Directory.EnumerateFiles(outDir, $"{model.Replace('/', '_')} - {seed} - *").Count();
+var filePath = Path.Join(outDir, $"{model.Replace('/', '_')} - {seed} - {nextNum}.txt");
+
+File.WriteAllText(filePath, $"model: {model}\nseed: {seed}\n run: {nextNum}\n DateTime: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}\noutput:\n{output}");
+
+Console.WriteLine("DONE");
