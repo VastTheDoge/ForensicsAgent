@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForensicsAgentHost", "ForensicsAgentHost\ForensicsAgentHost.csproj", "{C40B43CF-9D67-4A12-9D42-CD7E249400FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForensicsAgentWorker", "ForensicsAgentWorker\ForensicsAgentWorker.csproj", "{5FD44893-BD5A-4040-ADCA-0A5F96847A85}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C40B43CF-9D67-4A12-9D42-CD7E249400FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C40B43CF-9D67-4A12-9D42-CD7E249400FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C40B43CF-9D67-4A12-9D42-CD7E249400FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C40B43CF-9D67-4A12-9D42-CD7E249400FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FD44893-BD5A-4040-ADCA-0A5F96847A85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FD44893-BD5A-4040-ADCA-0A5F96847A85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FD44893-BD5A-4040-ADCA-0A5F96847A85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FD44893-BD5A-4040-ADCA-0A5F96847A85}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
