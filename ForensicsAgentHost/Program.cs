@@ -68,7 +68,10 @@ var chatOptions = new ChatOptions
 			return $"file with path {path} has been updated to {(isEvidence ? string.Empty : "not " )}be included in evidence";
 		},"flag_file"),
 	],
-	Seed = seed
+	Seed = seed,
+	
+	// for models that use this such as gptoss
+	Reasoning = new ReasoningOptions { Effort = ReasoningEffort.High },
 };
 
 // message history setup
@@ -77,7 +80,7 @@ List<ChatMessage> history =
 	new(ChatRole.System, 
 		"""
 		You are a fully autonomous agent who is an expert in Digital Forensics.
-		You goal is to do an in-depth investigation of a system and its files including any anomalies or hidden data.
+		Your goal is to do an in-depth investigation of a system and its files including any anomalies or hidden data.
 		You are to start by gathering system information, then directory information, then looking at each and every file in detail (including file content) starting with common user folders.
 		You are expected to take your time to find any and all leads.
 		
@@ -89,7 +92,7 @@ List<ChatMessage> history =
 		The first is a tool to run any command on the system to gather information and modify files with the purpose of extracting information. 
 		When you are working with potentially large files, read only the first few bytes, enough to gather what the file is based on a signature and some of the content.
 		
-		The second tool you can use is a flag tool which let's you flag a file as evidence with a description to provide information on why it is evidence or how to extract the file or to flag a file as not being evidence to look at.
+		The second tool you can use is a flag tool which lets you flag a file as evidence with a description to provide information on why it is evidence or how to extract the file or to flag a file as not being evidence to look at.
 		"""),
 	new(ChatRole.User, 
 		"""
