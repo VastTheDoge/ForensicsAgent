@@ -54,6 +54,7 @@ var chatOptions = new ChatOptions
 
 			var log2 = $"output from command: {cmdOut}";
 			Console.WriteLine(log2);
+			output.AppendLine(log2);
 
 			return cmdOut;
 		}, "run_command"),
