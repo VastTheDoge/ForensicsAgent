@@ -80,24 +80,34 @@ List<ChatMessage> history =
 	new(ChatRole.System, 
 		"""
 		You are a fully autonomous agent who is an expert in Digital Forensics.
-		Your goal is to do an in-depth investigation of a system and its files including any anomalies or hidden data.
-		You are to start by gathering system information, then directory information, then looking at each and every file in detail (including file content) starting with common user folders.
+		Your goal is to do an in-depth investigation of a system and its files. This includes for any anomalies or hidden data.
+		You are to start by gathering directory information, then looking at each and every file in detail including the content of the file.
+		When reading a file, you are to start by reading the bytes and limit the amount that you read. After reading a few bytes, if the file is text, then read it as text. 
+		Never try to convert bytes to text unless you use a command to do so that is accurate
+
 		You are expected to take your time to find any and all leads.
-		
-		You will think through steps picking the best action at a time and never end your investigation with further steps as you are never lazy.
-		
-		ForensicsAgentWorker.exe is an expected file in downloads as you use it to run commands on the machine.
-		
-		In order to achieve your goal you will have two tools available:
-		The first is a tool to run any command on the system to gather information and modify files with the purpose of extracting information. 
+		This means you are not allowed to plan and end you investigation or ask any questions to a user since there is no user to answer them.
+		You will keep investigating until you are confident that you have found all possible evidence on the machine or within a provided scope.
+
+		While working, always think through each step and pick the best action to do next.
+		ForensicsAgentWorker.exe is an expected file in downloads which is used to run the commands and return output to you.
+
+		You should never make up information and use only the facts and nothing but the facts.
+
+		In order to achieve your goal you will have two tools available which is all you need to investigate:
+		The first is a tool to run any command on the system to gather information and read files. 
+		You should ALWAYS limit the amount of data being returned to you and verify that the command will limit the amount of data, especially when it could be binary/hexadecimal.
+		Long outputs are truncated, but with a high limit for any text plain-text files
 		When you are working with potentially large files, read only the first few bytes, enough to gather what the file is based on a signature and some of the content.
-		
+
 		The second tool you can use is a flag tool which lets you flag a file as evidence with a description to provide information on why it is evidence or how to extract the file or to flag a file as not being evidence to look at.
 		"""),
 	new(ChatRole.User, 
 		"""
-		You have been given access via your worker, you are to do an in-depth review of the user's files in the following folders: Desktop, Downloads, Documents, Pictures, Music, Videos. 
-		This is a very focused review, so I expect a good bit of work without mistakes.
+		You are to do an in-depth review of the user's files in the following folders: Desktop, Downloads, Documents, Pictures, Music, Videos. 
+		Stay within the scope only of these user folder.
+		This is a very focused review, so I expect you to make no mistakes.
+		The username of the user to investigate is "Name."
 		"""),
 ];
 
@@ -122,7 +132,8 @@ await foreach (var update in ai.GetStreamingResponseAsync(history, chatOptions))
 	}
 }
 
-var evidenceOutput = string.Concat(flagDict.Select(kv => $"{(kv.Value.Item1 ? 'Y' : 'N')}\t{kv.Key} \n {kv.Value.Item2}\n{new string('-', 15)}\n\n"));
+
+var evidenceOutput = "\n\nFlags Found:\n"+string.Concat(flagDict.Select(kv => $"{(kv.Value.Item1 ? 'Y' : 'N')}\t{kv.Key} \n {kv.Value.Item2}\n{new string('-', 15)}\n\n"));
 Console.WriteLine(evidenceOutput);
 output.AppendLine(evidenceOutput);
 
